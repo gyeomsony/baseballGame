@@ -5,11 +5,12 @@
 //  Created by 손겸 on 11/5/24.
 //
 
-/*
+/* 각 클래스별로 기능 나누기
  - 정답 클래스 만들기
  - Input 클래스 만들기
  - 힌트 클래스 만들기 ( 스트라이크와 볼 구분)
  - baseballGame 클래스 만들기 ( 전체적인 관리, 각 클래스의 메서드 호출)
+ ---------------------------------------------------------
  
  
  */
@@ -28,68 +29,81 @@ class AnswerGenerator {
 }
 // Intput class - 입력값을 받고 3자리가 맞는지 숫자인지 확인한다.
 class InputHandler {
-    private var overlapInputs: Set<String> = []
-    
-    func getInput() -> String? { // nil이 아닌 경우 count 확인
-        print("입력: ", terminator: "")
+    func getInput() -> String? {
+        print("ㄴ ", terminator: "")
         
+        // 공백으로 입력 할 경우
         if let input = readLine() {
-            // 1. 숫자 비워져있는지 확인
-            if input.isEmpty {
-                print("숫자를 입력해주세요.")
+            guard !input.isEmpty else {
+                print("아무것도 입력되지 않았습니다.")
                 return nil
             }
-            // 3. 숫자로 변환 가능 확인,숫자 세자리인지 확인,숫자 앞에 0이 올 수 없게 확이
-            if let number = Int(input) {
-                if number < 100 || number > 999 {
-                    print("앞자리가 0이 되지 않는 숫자 세 자리를 입력해주세요.")
-                    return nil
-                }
-                // 4. 중복 입력 확인
-                if overlapInputs.contains(input) {
-                    print("중복된 숫자 입니다. 다시 입력해주세요.")
-                    return nil
-                } else {
-                    // 중복이 아닐 경우 Set에 추가 됨
-                    overlapInputs.insert(input)
-                }
-                
-                return input // 모두 만족할 경우 리턴됨
-              
-            } else {
-                print("숫자만 입력하세요..")
+            // 세 자리 이외로 쓸 경우
+            guard let number = Int(input), 100...999 ~= number else {
+                print("세 자리 숫자로 입력해주세요.")
                 return nil
             }
-        } else {
-            print("숫!자!를 입력하세요.")
-            return nil // readLine 값이 nil인 경우 EOP ??
+            // 중복된 숫자가 있을 경우
+            guard Set(input).count == 3 else {
+                print("중복되지 않은 숫자 세 자리를 입력해주세요.")
+                return nil
+            }
             
+            return input
+        } else {
+            print("숫자를 입력하세요!")
+            return nil //readLine이
         }
     }
 }
 
-// 결과 힌트 class
+// 힌트 class
 class HintCalculator {
-    
-    
+    // answer =정답 배열, userGuess= 사용자가 추측한 배열
+    func calculateHints(answer: [Int], userGuess: [Int]) -> (strike: Int, ball: Int) {
+        
+        // 스트라이크 계산
+        let strikeCount = zip(answer, userGuess).map { (answerNumber, guessedNumber) in
+            return answerNumber == guessedNumber ? 1 : 0 }.reduce(0, +)
+        
+        // 볼 계산
+        let ballCount = userGuess.filter { guessedNumber in
+            answer.contains(guessedNumber)
+        }.count - strikeCount
+        
+        return (strikeCount, ballCount)
+    }
 }
-// 전체관리 클래스
+
+
+// BaseballGame 클래스
 class BaseballGame {
     private let answerGenerator = AnswerGenerator()
     private let inputHandler = InputHandler()
+    private let hintCalculator = HintCalculator()
     
     func start() {
         let answer = answerGenerator.generate()
-        print("숫자 야구 게임 Strat~!!!!!!! 어서 세 자리 숫자를 입력하세요!")
+        print("⚾️ 숫자 야구 게임 시작~! 세 자리 숫자를 입력하세요! ⚾️")
+        
+        while true {
+            guard let userInput = inputHandler.getInput() else {
+                continue
+            }
+            //  스트라이크와 볼 값을 가져와 입력값과 비교하여 안내해준다.
+            let userGuess = userInput.compactMap { Int(String($0)) }
+            let (strike, ball) = hintCalculator.calculateHints(answer: answer, userGuess: userGuess)
+            print("스트라이크: \(strike), 볼: \(ball)")
+            
+            if strike == 3 {
+                print("🎉🎉🧢홈⚾️런🧢🎉🎉")
+                break
+            } else {
+                print("아까워요.. 다시!!!")
+            }
+        }
     }
-    
 }
-
-
-//실행 인스턴스
+// 실행 인스턴스 생성
 let game = BaseballGame()
-let input = InputHandler()
 game.start()
-input.getInput()
-
-
